@@ -28,7 +28,7 @@ public class CategoryRepository {
                 .getResultList();
     }
 
-    // 이름으로 카테고리 조회 (폼에서 선택한 카테고리명 → Category 엔티티 변환 시 사용)
+    // 이름으로 카테고리 조회 (중복 검사 / 이름 기반 조회)
     public Optional<Category> findByName(String name) {
         List<Category> result = em.createQuery(
                         "SELECT c FROM Category c WHERE c.name = :name", Category.class)
@@ -37,14 +37,30 @@ public class CategoryRepository {
         return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
     }
 
-    // JOIN FETCH: N+1 문제 방지 (Category + Products 한 번에 로드)
+    // JOIN FETCH: Category + Products 한 번에 조회
     public Optional<Category> findByIdWithProducts(Long id) {
         List<Category> result = em.createQuery(
-                        "SELECT DISTINCT c FROM Category c JOIN FETCH c.products WHERE c.id = :id",
+                        "SELECT DISTINCT c FROM Category c LEFT JOIN FETCH c.products WHERE c.id = :id",
                         Category.class)
                 .setParameter("id", id)
                 .getResultList();
         return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
     }
-}
 
+    // 삭제 전 연결된 상품 개수 확인
+    public long countProductsByCategoryId(Long categoryId) {
+        return em.createQuery(
+                        "SELECT COUNT(p) FROM Product p WHERE p.category.id = :id",
+                        Long.class)
+                .setParameter("id", categoryId)
+                .getSingleResult();
+    }
+
+    // 카테고리 삭제
+    public void delete(Long id) {
+        Category category = em.find(Category.class, id);
+        if (category != null) {
+            em.remove(category);
+        }
+    }
+}
