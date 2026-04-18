@@ -14,11 +14,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
-/**
- * =====================================================================
- * ProductController - 웹 요청 처리 계층 (Controller Layer)
- * =====================================================================
- */
 @Controller
 @RequestMapping("/products")
 public class ProductController {
@@ -32,19 +27,23 @@ public class ProductController {
         this.categoryService = categoryService;
     }
 
-    // ─────────────────────────────────────────────────────────────────
     // GET /products - 상품 목록 조회 + 검색
-    // ─────────────────────────────────────────────────────────────────
     @GetMapping
     public String listProducts(@RequestParam(required = false) String keyword,
                                @RequestParam(required = false) Long categoryId,
                                Model model) {
 
+        String normalizedKeyword = (keyword == null) ? null : keyword.trim();
+        boolean hasKeyword = normalizedKeyword != null && !normalizedKeyword.isBlank();
+        boolean hasCategory = categoryId != null;
+
         List<Product> products;
 
-        if (keyword != null && !keyword.isBlank()) {
-            products = productService.searchByName(keyword);
-        } else if (categoryId != null) {
+        if (hasKeyword && hasCategory) {
+            products = productService.searchByNameAndCategory(normalizedKeyword, categoryId);
+        } else if (hasKeyword) {
+            products = productService.searchByName(normalizedKeyword);
+        } else if (hasCategory) {
             products = productService.searchByCategory(categoryId);
         } else {
             products = productService.getAllProducts();
@@ -52,15 +51,14 @@ public class ProductController {
 
         model.addAttribute("products", products);
         model.addAttribute("categories", categoryService.getAllCategories());
-        model.addAttribute("keyword", keyword);
+        model.addAttribute("keyword", normalizedKeyword);
         model.addAttribute("categoryId", categoryId);
+        model.addAttribute("searchApplied", hasKeyword || hasCategory);
 
         return "productList";
     }
 
-    // ─────────────────────────────────────────────────────────────────
     // GET /products/{id} - 상품 상세 조회
-    // ─────────────────────────────────────────────────────────────────
     @GetMapping("/{id}")
     public String showProduct(@PathVariable Long id, Model model) {
         Product product = productService.getProductById(id)
@@ -70,18 +68,14 @@ public class ProductController {
         return "productView";
     }
 
-    // ─────────────────────────────────────────────────────────────────
     // GET /products/create - 상품 등록 폼 표시
-    // ─────────────────────────────────────────────────────────────────
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("productForm", new ProductForm());
         return "productForm";
     }
 
-    // ─────────────────────────────────────────────────────────────────
     // POST /products/create - 상품 등록 처리
-    // ─────────────────────────────────────────────────────────────────
     @PostMapping("/create")
     public String createProduct(@Valid @ModelAttribute("productForm") ProductForm productForm,
                                 BindingResult bindingResult,
@@ -101,9 +95,7 @@ public class ProductController {
         return "redirect:/products";
     }
 
-    // ─────────────────────────────────────────────────────────────────
     // GET /products/{id}/edit - 상품 수정 폼 표시
-    // ─────────────────────────────────────────────────────────────────
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable Long id, Model model) {
         Product product = productService.getProductById(id)
@@ -113,9 +105,7 @@ public class ProductController {
         return "productEditForm";
     }
 
-    // ─────────────────────────────────────────────────────────────────
     // POST /products/{id}/edit - 상품 수정 처리
-    // ─────────────────────────────────────────────────────────────────
     @PostMapping("/{id}/edit")
     public String updateProduct(@PathVariable Long id,
                                 @Valid @ModelAttribute("productForm") ProductForm productForm,
@@ -141,9 +131,7 @@ public class ProductController {
         return "redirect:/products/" + id;
     }
 
-    // ─────────────────────────────────────────────────────────────────
     // POST /products/{id}/delete - 상품 삭제 처리
-    // ─────────────────────────────────────────────────────────────────
     @PostMapping("/{id}/delete")
     public String deleteProduct(@PathVariable Long id,
                                 RedirectAttributes redirectAttributes) {

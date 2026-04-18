@@ -10,11 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * =====================================================================
- * ProductService - 비즈니스 로직 계층 (Service Layer)
- * =====================================================================
- */
 @Service
 @Transactional(readOnly = true)
 public class ProductService {
@@ -28,45 +23,31 @@ public class ProductService {
         this.categoryRepository = categoryRepository;
     }
 
-    /**
-     * 카테고리 이름(String) → Category 엔티티 변환
-     */
     public Category resolveCategory(String categoryName) {
         if (categoryName == null || categoryName.isBlank()) return null;
         return categoryRepository.findByName(categoryName).orElse(null);
     }
 
-    /**
-     * 모든 상품 조회
-     */
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
-    /**
-     * 상품명 키워드 검색
-     */
     public List<Product> searchByName(String keyword) {
         return productRepository.findByNameContaining(keyword);
     }
 
-    /**
-     * 카테고리별 상품 조회
-     */
     public List<Product> searchByCategory(Long categoryId) {
         return productRepository.findByCategoryId(categoryId);
     }
 
-    /**
-     * ID로 상품 조회
-     */
+    public List<Product> searchByNameAndCategory(String keyword, Long categoryId) {
+        return productRepository.findByNameContainingAndCategoryId(keyword, categoryId);
+    }
+
     public Optional<Product> getProductById(Long id) {
         return productRepository.findById(id);
     }
 
-    /**
-     * 새 상품 등록
-     */
     @Transactional
     public Product createProduct(Product product) {
         if (product.getPrice() != null && product.getPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
@@ -75,9 +56,6 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    /**
-     * 상품 수정
-     */
     @Transactional
     public Product updateProduct(Product product) {
         if (product.getPrice() != null && product.getPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
@@ -86,9 +64,6 @@ public class ProductService {
         return productRepository.update(product);
     }
 
-    /**
-     * 상품 삭제
-     */
     @Transactional
     public void deleteProduct(Long id) {
         productRepository.delete(id);

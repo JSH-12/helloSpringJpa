@@ -1,9 +1,4 @@
 <!DOCTYPE html>
-<!--
-    Thymeleaf 네임스페이스 선언:
-    xmlns:th="http://www.thymeleaf.org"
-    th:* 속성들이 Thymeleaf 표현식으로 처리됩니다.
--->
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -144,11 +139,11 @@
     <a class="reset-link" th:href="@{/products}">초기화</a>
 </form>
 
-<div class="empty-msg" th:if="${#lists.isEmpty(products)} and ${(keyword != null and !keyword.isBlank()) or categoryId != null}">
+<div class="empty-msg" th:if="${#lists.isEmpty(products) and searchApplied}">
     검색 결과가 없습니다.
 </div>
 
-<div class="empty-msg" th:if="${#lists.isEmpty(products)} and !((keyword != null and !keyword.isBlank()) or categoryId != null)">
+<div class="empty-msg" th:if="${#lists.isEmpty(products) and !searchApplied}">
     등록된 상품이 없습니다. 새 상품을 등록해 주세요.
 </div>
 
